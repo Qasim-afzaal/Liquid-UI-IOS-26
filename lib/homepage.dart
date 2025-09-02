@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'fluid_card.dart';
 import 'fluid_carousel.dart';
 
-// NOTE: Agr apko ye onboarding screen use krni hain to ap nechy text ko change kr skty hain
 class Showcase extends StatefulWidget {
   const Showcase({super.key, required this.title});
 
