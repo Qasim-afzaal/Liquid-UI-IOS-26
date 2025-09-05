@@ -1,8 +1,9 @@
+import 'package:fluid_splash/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'components.dart';
 import 'fluid_clipper.dart';
 import 'fluid_edge.dart';
+
 
 class FluidCarousel extends StatefulWidget {
   final List<Widget> children;
@@ -13,7 +14,8 @@ class FluidCarousel extends StatefulWidget {
   FluidCarouselState createState() => FluidCarouselState();
 }
 
-class FluidCarouselState extends State<FluidCarousel> with SingleTickerProviderStateMixin {
+class FluidCarouselState extends State<FluidCarousel>
+    with SingleTickerProviderStateMixin {
   int _index = 0;
   int? _dragIndex;
   Offset _dragOffset = Offset.zero;
@@ -45,31 +47,58 @@ class FluidCarouselState extends State<FluidCarousel> with SingleTickerProviderS
   Widget build(BuildContext context) {
     int l = widget.children.length;
 
-    return GestureDetector(
-        key: key,
-        onPanDown: (details) => _handlePanDown(details, _getSize()),
-        onPanUpdate: (details) => _handlePanUpdate(details, _getSize()),
-        onPanEnd: (details) => _handlePanEnd(details, _getSize()),
-        child: Stack(
-          children: <Widget>[
-            widget.children[_index % l],
-            _dragIndex == null
-                ? SizedBox()
-                : ClipPath(
-              clipBehavior: Clip.hardEdge,
-              clipper: FluidClipper(edge, margin: 10.0),
-              child: widget.children[_dragIndex! % l],
+    return Column(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            key: key,
+            onPanDown: (details) => _handlePanDown(details, _getSize()),
+            onPanUpdate: (details) => _handlePanUpdate(details, _getSize()),
+            onPanEnd: (details) => _handlePanEnd(details, _getSize()),
+            child: Stack(
+              children: <Widget>[
+                widget.children[_index % l],
+                _dragIndex == null
+                    ? const SizedBox()
+                    : ClipPath(
+                        clipBehavior: Clip.hardEdge,
+                        clipper: FluidClipper(edge, margin: 10.0),
+                        child: widget.children[_dragIndex! % l],
+                      ),
+                SunAndMoon(
+                  index: _dragIndex ?? 0,
+                  isDragComplete: _dragCompleted,
+                )
+              ],
             ),
-            SunAndMoon(
-              index: _dragIndex ?? 0,
-              isDragComplete: _dragCompleted,
-            )
-          ],
-        ));
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Page Indicator Dots
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(l, (i) {
+            bool isActive = i == _index % l;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 5),
+              width: isActive ? 16 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isActive ? Colors.blueAccent : Colors.grey,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
   }
 
   Size _getSize() {
-    final RenderBox? box = key.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? box =
+        key.currentContext?.findRenderObject() as RenderBox?;
     return box?.size ?? Size.zero;
   }
 
@@ -90,21 +119,14 @@ class FluidCarouselState extends State<FluidCarousel> with SingleTickerProviderS
   void _handlePanUpdate(DragUpdateDetails details, Size size) {
     double dx = details.localPosition.dx - _dragOffset.dx;
 
-    if (!_isSwipeActive(dx)) {
-      return;
-    }
-    if (_isSwipeComplete(dx, size.width)) {
-      return;
-    }
+    if (!_isSwipeActive(dx)) return;
+    if (_isSwipeComplete(dx, size.width)) return;
 
-    if (_dragDirection == -1) {
-      dx = size.width + dx;
-    }
+    if (_dragDirection == -1) dx = size.width + dx;
     edge.applyTouchOffset(Offset(dx, details.localPosition.dy), size);
   }
 
   bool _isSwipeActive(double dx) {
-    // check if a swipe is just starting:
     if (_dragDirection == 0.0 && dx.abs() > 20.0) {
       _dragDirection = dx.sign;
       edge.side = _dragDirection == 1.0 ? Side.left : Side.right;
@@ -116,18 +138,11 @@ class FluidCarouselState extends State<FluidCarousel> with SingleTickerProviderS
   }
 
   bool _isSwipeComplete(double dx, double width) {
-    if (_dragDirection == 0.0) {
-      return false;
-    } // not started
-    if (_dragCompleted) {
-      return true;
-    } // already done
+    if (_dragDirection == 0.0) return false;
+    if (_dragCompleted) return true;
 
-    // check if swipe is just completed:
     double availW = _dragOffset.dx;
-    if (_dragDirection == 1) {
-      availW = width - availW;
-    }
+    if (_dragDirection == 1) availW = width - availW;
     double ratio = dx * _dragDirection / availW;
 
     if (ratio > 0.8 && availW / width > 0.5) {
@@ -135,11 +150,13 @@ class FluidCarouselState extends State<FluidCarousel> with SingleTickerProviderS
       edge.farEdgeTension = 0.01;
       edge.edgeTension = 0.0;
       edge.applyTouchOffset();
+      setState(() {
+        _index = _dragIndex!;
+      });
     }
     return _dragCompleted;
   }
 
-  // gesture ko khatam krny k liye
   void _handlePanEnd(DragEndDetails details, Size size) {
     edge.applyTouchOffset();
   }
