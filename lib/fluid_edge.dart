@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 enum Side { left, top, right, bottom }
 
-
 class FluidEdge extends ChangeNotifier {
   List<_FluidPoint> points = [];
   Side side;
@@ -47,13 +46,11 @@ class FluidEdge extends ChangeNotifier {
   }
 
   Path buildPath(Size size, {double margin = 0.0}) {
-    if (points.isEmpty) {
-      return Path();
-    }
+    if (points.isEmpty) return Path();
 
     Matrix4 mtx = _getTransform(size, margin);
-
     Path path = Path();
+
     int l = points.length;
     Offset pt = _FluidPoint(-margin, 1.0).toOffset(mtx), pt1;
     path.moveTo(pt.dx, pt.dy);
@@ -82,9 +79,8 @@ class FluidEdge extends ChangeNotifier {
   }
 
   void tick(Duration duration) {
-    if (points.isEmpty) {
-      return;
-    }
+    if (points.isEmpty) return;
+
     int l = points.length;
     double t = min(1.5, (duration.inMilliseconds - lastT) / 1000 * 60);
     lastT = duration.inMilliseconds;
@@ -95,15 +91,13 @@ class FluidEdge extends ChangeNotifier {
       pt.velX -= pt.x * edgeTension * t;
       pt.velX += (1.0 - pt.x) * farEdgeTension * t;
       if (touchOffset != null) {
-        double ratio = max(0.0, 1.0 - (pt.y - touchOffset!.dy).abs() / maxTouchDistance);
-        pt.velX += (touchOffset!.dx - pt.x) * touchTension * ratio * t;
+        double ratio = max(
+            0.0, 1.0 - (pt.y - touchOffset!.dy).abs() / maxTouchDistance);
+        pt.velX +=
+            (touchOffset!.dx - pt.x) * touchTension * ratio * t;
       }
-      if (i > 0) {
-        _addPointTension(pt, points[i - 1].x, t);
-      }
-      if (i < l - 1) {
-        _addPointTension(pt, points[i + 1].x, t);
-      }
+      if (i > 0) _addPointTension(pt, points[i - 1].x, t);
+      if (i < l - 1) _addPointTension(pt, points[i + 1].x, t);
       pt.velX *= dampingT;
     }
 
@@ -122,20 +116,14 @@ class FluidEdge extends ChangeNotifier {
     Matrix4 mtx = Matrix4.identity()
       ..translate(-margin, 0.0)
       ..scale(w, h);
-    if (side == Side.top) {
-      mtx
-        ..rotateZ(pi / 2)
-        ..translate(0.0, -1.0);
-    } else if (side == Side.right) {
-      mtx
-        ..rotateZ(pi)
-        ..translate(-1.0, -1.0);
-    } else if (side == Side.bottom) {
-      mtx
-        ..rotateZ(pi * 3 / 2)
-        ..translate(-1.0, 0.0);
-    }
 
+    if (side == Side.top) {
+      mtx..rotateZ(pi / 2)..translate(0.0, -1.0);
+    } else if (side == Side.right) {
+      mtx..rotateZ(pi)..translate(-1.0, -1.0);
+    } else if (side == Side.bottom) {
+      mtx..rotateZ(pi * 3 / 2)..translate(-1.0, 0.0);
+    }
     return mtx;
   }
 
@@ -154,9 +142,6 @@ class _FluidPoint {
 
   Offset toOffset([Matrix4? transform]) {
     Offset o = Offset(x, y);
-    if (transform == null) {
-      return o;
-    }
-    return MatrixUtils.transformPoint(transform, o);
+    return transform == null ? o : MatrixUtils.transformPoint(transform, o);
   }
 }
