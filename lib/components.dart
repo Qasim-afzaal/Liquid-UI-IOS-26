@@ -32,10 +32,8 @@ class _SunAndMoonState extends State<SunAndMoon>
   void initState() {
     super.initState();
     _animationController = AnimationController.unbounded(vsync: this);
-    _rotationAnimation = Tween<double>(
-      begin: 1,
-      end: 0,
-    ).animate(_animationController);
+    _rotationAnimation =
+        Tween<double>(begin: 1, end: 0).animate(_animationController);
   }
 
   @override
@@ -47,47 +45,42 @@ class _SunAndMoonState extends State<SunAndMoon>
   @override
   Widget build(BuildContext context) {
     bool isDragComplete = widget.isDragComplete ?? false;
-    if (isDragComplete && widget.index != _currentIndex) {
+    if (_currentIndex != widget.index) {
       _currentIndex = widget.index;
-      double nextAnimState = widget.index / 3;
-      _animationController.animateTo(
-        nextAnimState,
-        duration: Duration(milliseconds: 350),
-        curve: Curves.easeOut,
-      );
+      _animationController
+        ..reset()
+        ..animateTo(1,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut);
     }
-    return SizedBox(
-      width: double.infinity,
-      height: double.infinity,
-      child: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          _buildAssetWithDefaultAngle(0, 240),
-          _buildAssetWithDefaultAngle(1, 30),
-          _buildAssetWithDefaultAngle(2, 180),
-        ],
-      ),
+    return AnimatedBuilder(
+      animation: _rotationAnimation,
+      builder: (context, child) {
+        return _buildSunMoonTransition();
+      },
     );
   }
 
-  Widget _buildAssetWithDefaultAngle(int index, double degreeAngle) {
-    double radianAngle = degreeAngle / 180 * pi;
-    return AnimatedOpacity(
-      opacity: index == _currentIndex % 3 ? 1 : 0,
-      duration: Duration(milliseconds: 300),
-      child: RotationTransition(
-        turns: _rotationAnimation,
-        child: Transform.translate(
-          offset: Offset(
-            rotationRadius * cos(radianAngle),
-            rotationRadius * sin(radianAngle),
-          ),
-          child: Image.asset(
-            widget.assetPaths.elementAt(index),
-            width: 70,
-            height: 70,
-          ),
-        ),
+  Widget _buildSunMoonTransition() {
+    double angle = _rotationAnimation.value * (pi / 2);
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        _buildPositionedImage(widget.index % widget.assetPaths.length, angle),
+        _buildPositionedImage(
+            (widget.index + 1) % widget.assetPaths.length, angle - pi / 2),
+      ],
+    );
+  }
+
+  Widget _buildPositionedImage(int index, double angle) {
+    return Positioned(
+      top: cos(angle) * rotationRadius,
+      left: sin(angle) * rotationRadius,
+      child: Image.asset(
+        widget.assetPaths[index],
+        height: 100,
+        width: 100,
       ),
     );
   }
