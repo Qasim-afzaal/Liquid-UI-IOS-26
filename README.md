@@ -1,6 +1,5 @@
 # 💧 Liquid Fluid UI - Flutter Package
 
-![Liquid Fluid UI Banner](https://via.placeholder.com/800/0066cc/ffffff?text=Liquid+Fluid+UI+-+Flutter+Package)
 
 A beautiful, interactive Flutter package that creates stunning liquid fluid UI effects without animations. Perfect for adding organic, flowing visual elements to your Flutter applications.
 
